@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eli’s SmartScapes - Modern Landscaping</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary-green: #2C5F2D;
+            --accent-green: #97BC62;
+            --dark-charcoal: #222222;
+            --light-gray: #F4F4F4;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--white);
+            color: var(--dark-charcoal);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            overflow: hidden;
+            padding: 0 20px;
+        }
+        section {
+            padding: 60px 0;
+        }
+        h1, h2, h3 {
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        h2 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 40px;
+        }
+        .text-center { text-align: center; }
+
+        .btn {
+            display: inline-block;
+            background: var(--accent-green);
+            color: var(--dark-charcoal);
+            padding: 12px 28px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+        .btn:hover {
+            background: var(--primary-green);
+            color: var(--white);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1617215239929-254592a6a578?auto=format&fit=crop&w=1740&q=80') no-repeat center center/cover;
+            color: var(--white);
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .hero-logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .hero-logo span { color: var(--accent-green); }
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            line-height: 1.2;
+        }
+        .hero p {
+            font-size: 1.3rem;
+            font-weight: 300;
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+
+        #services { background-color: var(--light-gray); }
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        .service-card {
+            background: var(--white);
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .service-card .icon {
+            font-size: 3rem;
+            color: var(--primary-green);
+            margin-bottom: 15px;
+        }
+        .service-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: var(--primary-green);
+        }
+
+        .why-smart-content {
+            display: flex;
+            gap: 50px;
+            align-items: center;
+        }
+        .why-smart-content .text-content, .why-smart-content .image-content { flex: 1; }
+        .why-smart-content img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .why-smart-content h3 { font-size: 1.8rem; }
+        .why-smart-content ul { list-style: none; padding: 0; }
+        .why-smart-content ul li {
+            padding-left: 1.5em;
+            text-indent: -.7em;
+            margin-bottom: 10px;
+        }
+        .why-smart-content ul li::before {
+            content: "✓ ";
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        #contact {
+            background-color: var(--primary-green);
+            color: var(--white);
+        }
+        #contact h2 { color: var(--white); }
+        #contact .subtitle { margin-top: -30px; margin-bottom: 30px; font-size: 1.1rem; }
+        
+        .contact-form {
+            max-width: 700px;
+            margin: 0 auto;
+            background: var(--white);
+            color: var(--dark-charcoal);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+        }
+        textarea { resize: vertical; height: 120px; }
+        .contact-form .btn {
+            width: 100%;
+            font-size: 1.1rem;
+            padding: 15px;
+        }
+
+        .footer {
+            background: var(--dark-charcoal);
+            color: var(--light-gray);
+            text-align: center;
+            padding: 40px 0;
+        }
+        .footer p { margin: 0; padding: 5px; }
+        .footer a {
+            color: var(--accent-green);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .footer a:hover { color: var(--white); }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero p { font-size: 1.1rem; }
+            .why-smart-content { flex-direction: column; }
+            .services-grid { grid-template-columns: 1fr; }
+            h2 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="hero">
+        <div class="hero-logo">Eli’s SmartScapes<span>.</span></div>
+        <h1>Yards That Are Smarter Than Ever.</h1>
+        <p>We combine expert landscaping with cutting-edge automation to create beautiful, efficient, and effortless outdoor spaces. Serving [Your City/Region].</p>
+        <a href="#contact" class="btn">Get a Free Quote</a>
+    </header>
+
+    <main>
+        <section id="services">
+            <div class="container">
+                <h2>Our Services</h2>
+                <div class="services-grid">
+                    <div class="service-card"><div class="icon">🌿</div><h3>Lawn Care</h3><p>Pristine mowing, fertilization, and weed control for a lush, healthy lawn.</p></div>
+                    <div class="service-card"><div class="icon">🌸</div><h3>Garden Design</h3><p>Custom designs that reflect your style, creating vibrant floral arrangements.</p></div>
+                    <div class="service-card"><div class="icon">🌳</div><h3>Tree Trimming</h3><p>Professional pruning to ensure tree health, safety, and picture-perfect shaping.</p></div>
+                    <div class="service-card"><div class="icon">💧</div><h3>Smart Irrigation</h3><p>Efficient water management with smart systems that adjust to weather and save you money.</p></div>
+                    <div class="service-card"><div class="icon">💡</div><h3>Automation Systems</h3><p>Installation of smart lighting, irrigation, and more, all controlled from your phone.</p></div>
+                    <div class="service-card"><div class="icon">📹</div><h3>Security Cameras</h3><p>Keep an eye on your property with integrated, high-definition cameras accessible anywhere.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="why-smart">
+            <div class="container">
+                <div class="why-smart-content">
+                    <div class="text-content">
+                        <h3>Upgrade to an Intelligent Yard</h3>
+                        <p>Our automation systems offer unparalleled convenience, security, and efficiency.</p>
+                        <ul>
+                            <li><strong>Enhanced Security:</strong> Automated lighting and integrated cameras provide peace of mind.</li>
+                            <li><strong>Save Water & Money:</strong> Smart irrigation waters only when needed, reducing utility bills.</li>
+                            <li><strong>Total Control:</strong> Manage your landscape and security from one app.</li>
+                            <li><strong>Boost Property Value:</strong> A smart, beautiful, and secure yard is a major asset.</li>
+                        </ul>
+                        <a href="#contact" class="btn">Get an Automation Quote</a>
+                    </div>
+                    <div class="image-content"><img src="https://images.unsplash.com/photo-1560415347-f83a21896d30?auto=format&fit=crop&w=870&q=80" alt="Controlling smart home on a phone"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="container text-center">
+                <h2>Request Your Free Estimate</h2>
+                <p class="subtitle">Fill out the form below, or call us directly at 559-825-3038</p>
+                <div class="contact-form">
+                    <!-- IMPORTANT: Replace "your-email@example.com" with your actual email address -->
+                    <form action="mailto:your-email@example.com" method="post" enctype="text/plain">
+                        <div class="form-group"><label for="name">Full Name</label><input type="text" id="name" name="Name" placeholder="John Doe" required></div>
+                        <div class="form-group"><label for="phone">Phone Number</label><input type="tel" id="phone" name="Phone" placeholder="(555) 123-4567"></div>
+                        <div class="form-group"><label for="message">How can we help?</label><textarea id="message" name="Message" placeholder="Tell us about your project, services you're interested in, and your address." required></textarea></div>
+                        <button type="submit" class="btn">Send Request</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <h3>Eli’s SmartScapes</h3>
+            <p>Serving [Your City/Region] with Pride</p>
+            <p><strong>Phone:</strong> <a href="tel:559-825-3038">559-825-3038</a></p>
+            <p>Built with <a href='https://fluentra-ai.lovable.app'>Fluentra AI</a></p>
+        </div>
+    </footer>
+
+</body>
+</html>
