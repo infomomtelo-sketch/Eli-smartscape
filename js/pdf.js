@@ -1,9 +1,12 @@
-// PDF in the browser (jsPDF), laid out like the paper mileage form plus a purpose column:
-// employee, month, trip rows, total miles, rate(s), total expense, employee signature,
-// approved by, date paid, method.
+// PDF in the browser (jsPDF). Mirrors the paper form "<ORG> MONTHLY MILEAGE EXPENSE REPORT":
+//   EMPLOYEE NAME / rows of DATE, FROM, TO, MILES (plus a BUSINESS PURPOSE column, which the
+//   paper form lacks but the trip log requires) / TOTAL MILES x RATE PER MILE /
+//   TOTAL MILEAGE EXPENSE / EMPLOYEE SIGNATURE / APPROVED BY, DATE PAID, METHOD OF PAYMENT.
+// The paper form has 15 trip lines; blank dotted lines pad the page up to 15.
 import { fmtDate, fmtDateTime, money, miles as fmtMiles, rateStr, safeFile, NOTICE, PAYMENT_METHODS } from './util.js';
 
 const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+const MIN_LINES = 15;
 
 function loadJsPdf() {
   if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
@@ -16,104 +19,129 @@ function loadJsPdf() {
   });
 }
 
-// Columns: x = left edge (pt), w = text width, right = right-aligned numeric column
+// x = left edge (pt), w = text width; MILES is right-aligned at its right edge.
 const COLS = [
-  { k: 'date', h: 'Date', x: 40, w: 48 },
-  { k: 'from', h: 'From', x: 92, w: 100 },
-  { k: 'to', h: 'To', x: 196, w: 100 },
-  { k: 'purpose', h: 'Business purpose', x: 300, w: 120 },
-  { k: 'miles', h: 'Miles', x: 424, w: 40, right: true },
-  { k: 'rate', h: 'Rate', x: 468, w: 42, right: true },
-  { k: 'amount', h: 'Amount', x: 514, w: 58, right: true },
+  { k: 'date', h: 'DATE', x: 40, w: 58 },
+  { k: 'from', h: 'FROM', x: 104, w: 118 },
+  { k: 'to', h: 'TO', x: 228, w: 118 },
+  { k: 'purpose', h: 'BUSINESS PURPOSE', x: 352, w: 128 },
+  { k: 'miles', h: 'MILES', x: 486, w: 86, right: true },
 ];
 
 export async function reportPdf(m, isDraft) {
   const JsPDF = await loadJsPdf();
   const doc = new JsPDF({ unit: 'pt', format: 'letter' });
-  const PAGE_BOTTOM = 730;
-  let y = 48;
+  const PAGE_BOTTOM = 735;
+  const dots = () => doc.setLineDashPattern([1, 2.2], 0);
+  const solid = () => doc.setLineDashPattern([], 0);
+  let y;
 
-  const header = () => {
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
-    doc.text('MILEAGE REIMBURSEMENT REPORT', 40, y);
-    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-    if (m.orgName) doc.text(m.orgName, 572, y, { align: 'right' });
+  const title = () => {
+    const t = `${(m.orgName || '').toUpperCase()} MONTHLY MILEAGE EXPENSE REPORT`.trim();
+    let size = 15;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(size);
+    while (doc.getTextWidth(t) > 532 && size > 9) { size -= 0.5; doc.setFontSize(size); }
+    doc.text(t, 306, 52, { align: 'center' });
   };
   const tableHead = () => {
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
     COLS.forEach((c) => doc.text(c.h, c.right ? c.x + c.w : c.x, y, c.right ? { align: 'right' } : undefined));
-    doc.setDrawColor(120); doc.line(40, y + 4, 572, y + 4);
-    y += 16; doc.setFont('helvetica', 'normal');
+    doc.setDrawColor(60); solid(); doc.line(40, y + 5, 572, y + 5);
+    y += 22; doc.setFont('helvetica', 'normal');
   };
 
-  header(); y += 24;
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold'); doc.text('Employee:', 40, y);
-  doc.setFont('helvetica', 'normal'); doc.text(m.employee || '', 100, y);
-  doc.setFont('helvetica', 'bold'); doc.text('Month:', 340, y);
-  doc.setFont('helvetica', 'normal'); doc.text(m.monthLabel, 380, y);
-  y += 18;
+  title();
+  y = 88;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+  doc.text('EMPLOYEE NAME:', 40, y);
+  doc.setFont('helvetica', 'normal'); doc.text(m.employee || '', 142, y);
+  doc.setFont('helvetica', 'bold'); doc.text('MONTH:', 400, y);
+  doc.setFont('helvetica', 'normal'); doc.text(m.monthLabel.toUpperCase(), 446, y);
+  y += 10;
   if (isDraft) {
-    doc.setTextColor(170, 0, 0); doc.setFont('helvetica', 'bold');
-    doc.text('DRAFT - not signed', 40, y); doc.setTextColor(0); y += 16;
+    doc.setTextColor(170, 0, 0); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+    doc.text('DRAFT - NOT SIGNED', 40, y + 8); doc.setTextColor(0); y += 14;
   }
-  y += 4;
+  y += 22;
   tableHead();
 
-  doc.setFontSize(8.5);
-  for (const r of m.rows) {
-    const cells = {
-      date: fmtDate(r.date), from: r.from, to: r.to, purpose: r.purpose,
-      miles: fmtMiles(r.miles), rate: rateStr(r.rate), amount: money(r.amount),
+  // Trip lines (padded with blank dotted lines to at least 15, like the paper form).
+  const rows = [...m.rows];
+  while (rows.length < MIN_LINES) rows.push(null);
+  doc.setFontSize(9.5);
+  for (const r of rows) {
+    const cells = r && {
+      date: fmtDate(r.date), from: r.from, to: r.to, purpose: r.purpose, miles: fmtMiles(r.miles),
     };
-    const lines = COLS.map((c) => (c.right ? [cells[c.k]] : doc.splitTextToSize(cells[c.k], c.w)));
-    const h = Math.max(...lines.map((l) => l.length)) * 11 + 4;
-    if (y + h > PAGE_BOTTOM) { doc.addPage(); y = 48; tableHead(); doc.setFontSize(8.5); }
-    COLS.forEach((c, i) => doc.text(lines[i], c.right ? c.x + c.w : c.x, y, c.right ? { align: 'right' } : undefined));
+    const lines = COLS.map((c) => (cells ? (c.right ? [cells[c.k]] : doc.splitTextToSize(cells[c.k], c.w)) : ['']));
+    const h = Math.max(24, Math.max(...lines.map((l) => l.length)) * 11 + 10);
+    if (y + h > PAGE_BOTTOM) { doc.addPage(); y = 60; tableHead(); doc.setFontSize(9.5); }
+    if (cells) COLS.forEach((c, i) => doc.text(lines[i], c.right ? c.x + c.w : c.x, y, c.right ? { align: 'right' } : undefined));
+    doc.setDrawColor(130); dots(); doc.line(40, y + h - 14, 572, y + h - 14); solid();
     y += h;
-    doc.setDrawColor(220); doc.line(40, y - 8, 572, y - 8);
   }
 
-  // Totals + signatures; keep together on one page.
-  const needed = 40 + m.breakdown.length * 13 + 170;
-  if (y + needed > PAGE_BOTTOM) { doc.addPage(); y = 48; }
-  y += 6; doc.setFontSize(10.5);
+  // Totals + signature block, kept together on one page.
+  const rateLines = m.breakdown.length > 1 ? m.breakdown.length : 1;
+  const needed = 160 + (rateLines - 1) * 16;
+  if (y + needed > PAGE_BOTTOM) { doc.addPage(); y = 60; }
+  y += 14; doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total miles:', 330, y); doc.text(fmtMiles(m.totalMiles), 572, y, { align: 'right' }); y += 15;
-  doc.setFont('helvetica', 'normal');
-  if (m.breakdown.length === 1) {
-    doc.text('Rate per mile:', 330, y); doc.text(rateStr(m.breakdown[0].rate), 572, y, { align: 'right' }); y += 15;
+  if (m.breakdown.length <= 1) {
+    const rate = m.breakdown.length ? rateStr(m.breakdown[0].rate) : '';
+    doc.text('TOTAL MILES:', 40, y);
+    doc.setFont('helvetica', 'normal'); doc.text(fmtMiles(m.totalMiles), 128, y);
+    doc.setDrawColor(0); dots(); doc.line(126, y + 2, 270, y + 2); solid();
+    doc.setFont('helvetica', 'bold'); doc.text('X', 300, y);
+    doc.text(`${rate} PER MILE`, 325, y);
+    y += 26;
   } else {
+    doc.text('TOTAL MILES:', 40, y);
+    doc.setFont('helvetica', 'normal'); doc.text(fmtMiles(m.totalMiles), 128, y);
+    doc.setDrawColor(0); dots(); doc.line(126, y + 2, 200, y + 2); solid();
     for (const b of m.breakdown) {
-      doc.text(`${fmtMiles(b.miles)} mi at ${rateStr(b.rate)}`, 330, y);
-      doc.text(money(b.amount), 572, y, { align: 'right' }); y += 13;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${fmtMiles(b.miles)} MILES X ${rateStr(b.rate)} PER MILE`, 230, y);
+      doc.setFont('helvetica', 'normal'); doc.text(money(b.amount), 572, y, { align: 'right' });
+      y += 16;
     }
-    y += 2;
+    y += 10;
   }
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-  doc.text('Total expense:', 330, y); doc.text(money(m.total), 572, y, { align: 'right' }); y += 34;
 
-  doc.setFontSize(10.5);
-  doc.setFont('helvetica', 'normal'); doc.text('Employee signature:', 40, y);
+  const field = (label, value, x, lineFrom, lineTo, yy) => {
+    doc.setFont('helvetica', 'bold'); doc.text(label, x, yy);
+    doc.setFont('helvetica', 'normal'); if (value) doc.text(value, lineFrom + 2, yy);
+    doc.setDrawColor(0); dots(); doc.line(lineFrom, yy + 2, lineTo, yy + 2); solid();
+  };
+  field('TOTAL MILEAGE EXPENSE:', money(m.total), 40, 198, 348, y);
+  y += 32;
+
+  doc.setFont('helvetica', 'bold'); doc.text('EMPLOYEE SIGNATURE:', 40, y);
   if (m.signedName) {
-    doc.setFont('times', 'italic'); doc.setFontSize(15); doc.text(m.signedName, 150, y);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
-    doc.text(`Signed electronically ${fmtDateTime(m.signedAt)}`, 150, y + 11);
+    doc.setFont('times', 'italic'); doc.setFontSize(16); doc.text(m.signedName, 186, y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+    doc.text(`Signed electronically ${fmtDateTime(m.signedAt)}`, 186, y + 12);
+    doc.setFontSize(11);
   }
-  doc.setDrawColor(0); doc.line(148, y + 2, 400, y + 2);
-  y += 40; doc.setFontSize(10.5);
+  doc.setDrawColor(0); dots(); doc.line(184, y + 2, 400, y + 2); solid();
+  y += 40;
+
   const method = (PAYMENT_METHODS.find((p) => p[0] === m.paymentMethod) || [, ''])[1];
-  doc.text('Approved by:', 40, y); doc.text(m.approvedBy || '', 120, y); doc.line(118, y + 2, 330, y + 2);
-  doc.text('Date:', 345, y); doc.text(m.approvedAt ? fmtDate(m.approvedAt) : '', 375, y); doc.line(372, y + 2, 460, y + 2);
+  field('APPROVED BY:', m.approvedBy, 40, 128, 268, y);
+  field('DATE PAID:', m.paidDate ? fmtDate(m.paidDate) : '', 282, 352, 442, y);
   y += 28;
-  doc.text('Date paid:', 40, y); doc.text(m.paidDate ? fmtDate(m.paidDate) : '', 120, y); doc.line(118, y + 2, 250, y + 2);
-  doc.text('Method:', 270, y); doc.text(method, 322, y); doc.line(320, y + 2, 460, y + 2);
+  field('METHOD OF PAYMENT:', method, 40, 184, 330, y);
+  if (m.approvedAt) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+    doc.text(`Approved ${fmtDateTime(m.approvedAt)}`, 130, y - 28 + 12);
+  }
 
   const n = doc.getNumberOfPages();
   for (let i = 1; i <= n; i++) {
-    doc.setPage(i); doc.setFontSize(7.5); doc.setTextColor(110);
-    doc.text(`${NOTICE}${m.hash ? '  Record ID ' + m.hash.slice(0, 16) : ''}`, 40, 765);
-    doc.text(`Page ${i} of ${n}`, 572, 765, { align: 'right' });
+    doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(110);
+    doc.text(`${NOTICE}${m.hash ? '  Record ID ' + m.hash.slice(0, 16) : ''}`, 40, 768);
+    doc.text(`Page ${i} of ${n}`, 572, 768, { align: 'right' });
     doc.setTextColor(0);
   }
   doc.save(`mileage-${safeFile(m.employee)}-${m.month.slice(0, 7)}.pdf`);

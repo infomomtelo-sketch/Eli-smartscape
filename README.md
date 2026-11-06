@@ -55,7 +55,7 @@ npm run test:ui   # headless-Chromium run of the real UI against an in-memory Su
 ## Assumptions to confirm with your employer / counsel
 
 - Policy on home-to-first-site commute is the owner's call; the app only warns.
-- The PDF follows the paper form's fields and order as described (employee, month, trip rows with purpose, total miles, rate, total expense, employee signature, approved by, date paid, method). Compare it with the actual form.
+- The PDF mirrors the Victoria's Care Home paper form (title, employee name, 15 trip lines, total miles x rate, total mileage expense, signature, approved by, date paid, method of payment) with one added BUSINESS PURPOSE column, because every trip needs a purpose.
 - Records are never deleted by the app; the 3-year minimum retention is satisfied by keeping everything.
 
 ## Out of scope

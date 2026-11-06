@@ -148,6 +148,8 @@ await page.click('nav.tabs >> text=Report');
 await page.fill('#month', '2026-08');
 await page.waitForSelector('.badge.paid');
 assert.equal(await page.locator('#unsign').count(), 0);
+const [pdf2] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), page.click('#pdf')]).catch(() => [null]);
+if (pdf2) fs.copyFileSync(await pdf2.path(), `${OUT}/report-paid.pdf`);
 
 console.log(errors.length ? '\nPage errors:\n' + errors.join('\n') : '\nNo page errors.');
 await browser.close(); server.close();
