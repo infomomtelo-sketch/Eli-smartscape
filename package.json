@@ -1,0 +1,11 @@
+{
+  "name": "mileage-reimbursement",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/logic.test.mjs",
+    "test:ui": "node tests/smoke.mjs",
+    "test:db": "supabase/tests/run.sh",
+    "dev": "npx wrangler pages dev ."
+  }
+}
